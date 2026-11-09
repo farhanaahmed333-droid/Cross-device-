@@ -33,3 +33,8 @@ This is a prototype, not end-to-end encrypted. Do not send passwords, private ke
 
 ## GitHub
 Create a new repository named `cross-device-connection`, then upload these files or push this folder with Git.
+
+
+## Android APK build
+
+This repository includes a Capacitor Android wrapper and a GitHub Actions workflow at `.github/workflows/android-apk.yml`. Run the workflow from the Actions tab (Build Android APK) or push a change to the app source. When the workflow succeeds, download the `cross-device-connect-debug-apk` artifact and install `app-debug.apk` on an Android device. The native app connects to the hosted WebSocket endpoint at `wss://cross-device-connect.onrender.com`.
