@@ -52,7 +52,7 @@ function connect() {
     if (socket !== nextSocket) return;
     setConnectionState(true, "Connected to server");
     addLog("Connected to server.");
-    if (activeRoom) joinRoom(activeRoom, false);
+    joinRoom(activeRoom || roomInput.value, false);
   });
 
   nextSocket.addEventListener("close", () => {
