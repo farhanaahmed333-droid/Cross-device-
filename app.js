@@ -44,8 +44,11 @@ function joinRoom(room, announce = true) {
 
 function connect() {
   if (manuallyClosed) return;
-  const scheme = location.protocol === "https:" ? "wss:" : "ws:";
-  const nextSocket = new WebSocket(`${scheme}//${location.host}`);
+  const nativeApp = Boolean(window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform());
+  const socketUrl = nativeApp
+    ? "wss://cross-device-connect.onrender.com"
+    : `${location.protocol === "https:" ? "wss:" : "ws:"}//${location.host}`;
+  const nextSocket = new WebSocket(socketUrl);
   socket = nextSocket;
 
   nextSocket.addEventListener("open", () => {
