@@ -1,0 +1,6 @@
+{
+  "appId": "com.tamanna.crossdevice",
+  "appName": "Cross-device Connection",
+  "webDir": "www",
+  "bundledWebRuntime": false
+}
