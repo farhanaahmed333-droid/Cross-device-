@@ -6,8 +6,12 @@ const joinForm = document.getElementById("joinForm");
 const messageForm = document.getElementById("messageForm");
 const roomInput = document.getElementById("room");
 const messageInput = document.getElementById("message");
-let socket;
+
+let socket = null;
 let joined = false;
+let activeRoom = "";
+let reconnectTimer = null;
+let manuallyClosed = false;
 
 function addLog(text) {
   const li = document.createElement("li");
@@ -15,33 +19,81 @@ function addLog(text) {
   log.prepend(li);
 }
 
-function connect() {
-  const scheme = location.protocol === "https:" ? "wss:" : "ws:";
-  socket = new WebSocket(`${scheme}//${location.host}`);
+function setConnectionState(online, text) {
+  statusText.textContent = text;
+  dot.classList.toggle("online", online);
+}
 
-  socket.addEventListener("open", () => {
-    statusText.textContent = "Connected to server";
-    dot.classList.add("online");
+function joinRoom(room, announce = true) {
+  const normalized = String(room || "").trim().toUpperCase();
+  if (!/^[A-Z0-9-]{4,20}$/.test(normalized)) {
+    addLog("Room code must be 4–20 letters, numbers, or hyphens.");
+    return;
+  }
+  activeRoom = normalized;
+  roomInput.value = normalized;
+  joined = false;
+  roomInfo.textContent = "Joining room…";
+  if (socket && socket.readyState === WebSocket.OPEN) {
+    socket.send(JSON.stringify({ type: "join", room: normalized }));
+    if (announce) addLog(`Joining room ${normalized}`);
+  } else if (announce) {
+    addLog("Not connected yet. The room will be joined after reconnect.");
+  }
+}
+
+function connect() {
+  if (manuallyClosed) return;
+  const scheme = location.protocol === "https:" ? "wss:" : "ws:";
+  const nextSocket = new WebSocket(`${scheme}//${location.host}`);
+  socket = nextSocket;
+
+  nextSocket.addEventListener("open", () => {
+    if (socket !== nextSocket) return;
+    setConnectionState(true, "Connected to server");
+    addLog("Connected to server.");
+    if (activeRoom) joinRoom(activeRoom, false);
   });
-  socket.addEventListener("close", () => {
-    statusText.textContent = "Disconnected — retrying in 2 seconds";
-    dot.classList.remove("online");
+
+  nextSocket.addEventListener("close", () => {
+    if (socket !== nextSocket) return;
     joined = false;
-    setTimeout(connect, 2000);
+    setConnectionState(false, "Disconnected — reconnecting in 2 seconds");
+    roomInfo.textContent = activeRoom
+      ? `Reconnecting to room ${activeRoom}…`
+      : "Not in a room yet.";
+    if (!reconnectTimer && !manuallyClosed) {
+      reconnectTimer = setTimeout(() => {
+        reconnectTimer = null;
+        connect();
+      }, 2000);
+    }
   });
-  socket.addEventListener("error", () => {
-    statusText.textContent = "Connection error";
-    dot.classList.remove("online");
+
+  nextSocket.addEventListener("error", () => {
+    if (socket !== nextSocket) return;
+    setConnectionState(false, "Connection error — retrying");
   });
-  socket.addEventListener("message", (event) => {
+
+  nextSocket.addEventListener("message", (event) => {
+    if (socket !== nextSocket) return;
     let data;
-    try { data = JSON.parse(event.data); } catch { return; }
-    if (data.type === "joined") {
+    try {
+      data = JSON.parse(event.data);
+    } catch {
+      addLog("Received an unreadable server response.");
+      return;
+    }
+
+    if (data.type === "connected") {
+      addLog(`Device connected (${data.deviceId}).`);
+    } else if (data.type === "joined") {
       joined = true;
+      activeRoom = data.room;
       roomInfo.textContent = `Room ${data.room} · ${data.count} device(s) connected`;
-      addLog(`Joined room ${data.room}`);
+      addLog(`Joined room ${data.room}.`);
     } else if (data.type === "devices") {
-      roomInfo.textContent = `${data.count} device(s) connected in this room`;
+      roomInfo.textContent = `${data.count} device(s) connected in room ${activeRoom}`;
     } else if (data.type === "message") {
       addLog(`${data.from}: ${data.text}`);
     } else if (data.type === "error") {
@@ -52,16 +104,29 @@ function connect() {
 
 joinForm.addEventListener("submit", (event) => {
   event.preventDefault();
-  if (!socket || socket.readyState !== WebSocket.OPEN) return addLog("Not connected to the server yet.");
-  socket.send(JSON.stringify({ type: "join", room: roomInput.value }));
+  joinRoom(roomInput.value);
 });
 
 messageForm.addEventListener("submit", (event) => {
   event.preventDefault();
-  if (!joined) return addLog("Join a room before sending messages.");
-  if (!socket || socket.readyState !== WebSocket.OPEN) return addLog("Connection lost; please wait for reconnect.");
-  socket.send(JSON.stringify({ type: "message", text: messageInput.value }));
+  const text = messageInput.value.trim();
+  if (!text) return;
+  if (!joined) {
+    addLog("Join a room before sending messages.");
+    return;
+  }
+  if (!socket || socket.readyState !== WebSocket.OPEN) {
+    addLog("Connection lost; reconnecting. Your message was not sent.");
+    return;
+  }
+  socket.send(JSON.stringify({ type: "message", text }));
   messageInput.value = "";
+});
+
+window.addEventListener("beforeunload", () => {
+  manuallyClosed = true;
+  if (reconnectTimer) clearTimeout(reconnectTimer);
+  if (socket) socket.close();
 });
 
 connect();
