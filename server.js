@@ -15,7 +15,30 @@ const MESSAGE_WINDOW_MS = 60 * 1000;
 const MESSAGE_LIMIT = 40;
 
 app.disable("x-powered-by");
+app.use(express.json({ limit: "24kb" }));
 app.use(express.static(__dirname, { extensions: ["html"] }));
+app.post("/api/ai-chat", async (req, res) => {
+  const apiKey = process.env.ANTHROPIC_API_KEY;
+  if (!apiKey) return res.status(503).json({ error: "Claude API is not configured on the server yet." });
+  const messages = req.body && req.body.messages;
+  if (!Array.isArray(messages) || messages.length < 1 || messages.length > 20 || messages.some((m) => !m || !["user", "assistant"].includes(m.role) || typeof m.content !== "string" || m.content.length > 6000)) {
+    return res.status(400).json({ error: "Invalid conversation. Send up to 20 text messages." });
+  }
+  try {
+    const response = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: { "content-type": "application/json", "anthropic-version": "2026-10-21", "x-api-key": apiKey },
+      body: JSON.stringify({ model: process.env.ANTHROPIC_MODEL || "claude-sonnet-5-5", max_tokens: 700, system: "You are Arham, a helpful Bengali-speaking voice companion. Reply naturally and concisely in the language the user uses. Do not claim to be a human.", messages })
+    });
+    const result = await response.json();
+    if (!response.ok) return res.status(response.status).json({ error: result.error && result.error.message ? result.error.message : "Claude API request failed." });
+    const reply = (result.content || []).filter((part) => part.type === "text").map((part) => part.text).join("\n").trim();
+    return res.json({ reply });
+  } catch (error) {
+    return res.status(502).json({ error: "Could not reach the Claude API." });
+  }
+});
+
 app.get("/health", (_req, res) => {
   res.set("Cache-Control", "no-store");
   res.json({ ok: true, service: "cross-device-connect", rooms: rooms.size });
@@ -126,6 +149,16 @@ wss.on("connection", (ws) => {
     if (data.type === "leave") {
       removeClient(ws);
       send(ws, { type: "left" });
+      return;
+    }
+
+    if (["call_offer", "call_answer", "ice_candidate", "call_end"].includes(data.type)) {
+      if (!ws.room) return send(ws, { type: "error", message: "Join a room before starting a call." });
+      const entry = getRoom(ws.room);
+      if (!entry || entry.clients.size !== 2) return send(ws, { type: "error", message: "A call needs exactly two connected devices in the room." });
+      for (const client of entry.clients) {
+        if (client !== ws) send(client, { ...data, from: ws.deviceId });
+      }
       return;
     }
 

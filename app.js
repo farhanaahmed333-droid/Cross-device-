@@ -67,6 +67,9 @@ function addMessage(data) {
   messages.scrollTop = messages.scrollHeight;
 }
 
+window.cdcSend = (payload) => send(payload);
+window.cdcIsJoined = () => joined;
+
 function send(payload) {
   if (!socket || socket.readyState !== WebSocket.OPEN) {
     notify("Reconnecting to the server. Try again in a moment.");
@@ -114,6 +117,8 @@ function connect() {
       } else if (data.type === "devices") {
         deviceCount.textContent = data.count + (data.count === 1 ? " device" : " devices");
         roomInfo.textContent = data.count > 1 ? "Connected — both devices are in this room." : "Waiting for another device…";
+      } else if (["call_offer", "call_answer", "ice_candidate", "call_end"].includes(data.type)) {
+        window.dispatchEvent(new CustomEvent("cdc-call-signal", { detail: data }));
       } else if (data.type === "message") {
         addMessage(data);
       } else if (data.type === "left") {

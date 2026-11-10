@@ -3,6 +3,8 @@ name: Build Android APK
 on:
   push:
     branches: [main]
+  pull_request:
+    branches: [main]
   workflow_dispatch:
 
 permissions:
@@ -44,7 +46,7 @@ jobs:
       - name: Prepare web assets
         run: |
           mkdir -p www
-          cp index.html app.js style.css www/
+          cp index.html app.js voice-call.js style.css www/
 
       - name: Generate Android project
         run: npx cap add android

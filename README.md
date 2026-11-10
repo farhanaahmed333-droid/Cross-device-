@@ -46,3 +46,21 @@ The Android wrapper connects to \`wss://cross-device-connect.onrender.com\`.
 - A pairing code is a temporary room key, not an identity or account login.
 - Messages are live and are not stored as chat history.
 - Keep the app and server updated before using it beyond testing.
+
+
+## Claude voice companion and device calls (feature branch)
+
+The `feature/voice-video-ai` branch adds:
+- A text conversation endpoint at `POST /api/ai-chat` that calls the Claude Messages API.
+- Browser speech recognition and speech synthesis controls for spoken interaction with Arham. Support varies by browser and Android WebView.
+- WebRTC audio/video calling between two devices paired in the same room, using the existing WebSocket room as signaling.
+
+### Required server configuration
+
+Set `ANTHROPIC_API_KEY` as a **secret environment variable** on the Render web service. Never put the key in frontend JavaScript, GitHub source, chat messages, or a public file. The default model is `claude-sonnet-5-5`; it can be changed with `ANTHROPIC_MODEL`.
+
+Claude API calls require an active Anthropic API balance/credits. Creating a key alone does not fund API usage. The voice UI uses the browser's built-in speech recognition and speech synthesis; it is not a native full-duplex Claude audio API session.
+
+### Calling limitations
+
+WebRTC uses public STUN servers. Some mobile networks and restrictive NATs require a TURN relay server, which is not configured in this prototype. Camera and microphone permissions are required, and calls need exactly two devices in the same room.

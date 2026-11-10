@@ -78,6 +78,35 @@
       <p class="chat-hint">Messages are delivered live to every device in this room.</p>
     </section>
 
+    <section class="chat-card" aria-labelledby="arham-title">
+      <div class="section-heading"><div><p class="eyebrow">CLAUDE AI</p><h2 id="arham-title">Talk with Arham</h2></div><span class="device-count">AI voice</span></div>
+      <ol id="aiMessages" class="messages" aria-live="polite"></ol>
+      <form id="aiForm" class="message-form">
+        <label class="visually-hidden" for="aiInput">Message Arham</label>
+        <input id="aiInput" maxlength="4000" placeholder="Write or use the microphone…" autocomplete="off">
+        <button id="aiSend" class="send-button" type="submit" aria-label="Send to Arham">↑</button>
+      </form>
+      <div class="room-actions" style="margin-top:10px">
+        <button id="aiMic" class="icon-button" type="button">🎙 Speak</button>
+        <button id="aiStop" class="icon-button" type="button">Stop voice</button>
+      </div>
+      <p id="aiStatus" class="chat-hint">Claude API needs a server-side API key and active credits. Microphone speech support depends on the browser.</p>
+    </section>
+
+    <section class="chat-card" aria-labelledby="call-title">
+      <div class="section-heading"><div><p class="eyebrow">DEVICE TO DEVICE</p><h2 id="call-title">Audio / Video call</h2></div><span class="device-count">WebRTC</span></div>
+      <div class="room-actions">
+        <button id="audioCall" class="secondary-button" type="button">Start audio call</button>
+        <button id="videoCall" class="secondary-button" type="button">Start video call</button>
+        <button id="endCall" class="icon-button" type="button">End call</button>
+      </div>
+      <div class="call-videos" style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px">
+        <video id="localVideo" autoplay muted playsinline style="width:100%;background:#08111d;border-radius:12px"></video>
+        <video id="remoteVideo" autoplay playsinline style="width:100%;background:#08111d;border-radius:12px"></video>
+      </div>
+      <p id="callStatus" class="chat-hint">Join the same room on exactly two devices before calling. Some networks require a TURN relay server.</p>
+    </section>
+
     <footer>
       <p><strong>Privacy note:</strong> Pairing codes are temporary room keys, not user authentication. Messages are protected in transit by HTTPS/WSS but are not end-to-end encrypted. Do not send passwords or sensitive information.</p>
       <p class="footer-meta">Cross-device Connect · Prototype</p>
@@ -85,5 +114,6 @@
     <div id="toast" class="toast" role="status" aria-live="polite"></div>
   </main>
   <script src="app.js"></script>
+  <script src="voice-call.js"></script>
 </body>
 </html>
