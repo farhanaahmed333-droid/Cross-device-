@@ -67,7 +67,10 @@ function addMessage(data) {
   messages.scrollTop = messages.scrollHeight;
 }
 
-window.cdcSend = (payload) => send(payload);\nwindow.cdcIsJoined = () => joined;\n\nfunction send(payload) {
+window.cdcSend = (payload) => send(payload);
+window.cdcIsJoined = () => joined;
+
+function send(payload) {
   if (!socket || socket.readyState !== WebSocket.OPEN) {
     notify("Reconnecting to the server. Try again in a moment.");
     return false;
