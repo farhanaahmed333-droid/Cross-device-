@@ -117,7 +117,9 @@ function connect() {
       } else if (data.type === "devices") {
         deviceCount.textContent = data.count + (data.count === 1 ? " device" : " devices");
         roomInfo.textContent = data.count > 1 ? "Connected — both devices are in this room." : "Waiting for another device…";
-      } else if (["call_offer", "call_answer", "ice_candidate", "call_end"].includes(data.type)) {\n        window.dispatchEvent(new CustomEvent("cdc-call-signal", { detail: data }));\n      } else if (data.type === "message") {
+      } else if (["call_offer", "call_answer", "ice_candidate", "call_end"].includes(data.type)) {
+        window.dispatchEvent(new CustomEvent("cdc-call-signal", { detail: data }));
+      } else if (data.type === "message") {
         addMessage(data);
       } else if (data.type === "left") {
         setJoined(false);
