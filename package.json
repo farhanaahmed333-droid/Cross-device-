@@ -5,7 +5,8 @@
   "description": "Minimal room-based real-time connection prototype for two browser devices",
   "main": "server.js",
   "scripts": {
-    "start": "node server.js"
+    "start": "node server.js",
+    "test": "node --test"
   },
   "dependencies": {
     "express": "^4.21.2",
