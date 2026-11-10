@@ -1,40 +1,48 @@
-# Cross-device Connection Starter
+# Cross-device Connect
 
-A small, GitHub-ready prototype for connecting two browser devices through a shared room code.
+A mobile-friendly room-pairing app for connecting two or more devices and exchanging live messages over a secure WebSocket connection.
 
-## What it does
-- Runs a small Node.js server.
-- Lets two devices join the same room using a room code.
-- Sends text messages between connected devices in real time using WebSockets.
-- Shows connection status and connected-device count.
+## Use it
 
-## Requirements
-- Node.js 18 or newer
-- npm
+1. Open the deployed app on the first device.
+2. Tap **Create a new room**.
+3. Copy or share the 8-character pairing code.
+4. Open the same app on the second device and enter that code.
+5. Send a message; it appears live on every connected device in that room.
+
+The pairing code is generated randomly by the server. Rooms are kept briefly after the last device disconnects so a temporary network drop does not immediately destroy the room.
 
 ## Run locally
-```bash
+
+Requires Node.js 18 or newer.
+
+\`\`\`bash
 npm install
+npm test
 npm start
-```
-Open `http://localhost:3000` on one device. To test another device on the same Wi-Fi, open `http://YOUR-COMPUTER-LAN-IP:3000` on the second device.
+\`\`\`
 
-Enter the same room code on both devices. For phones on different networks, deploy the server to a hosting provider that supports persistent WebSocket connections and use its HTTPS URL.
+Open \`http://localhost:3000\` in two browser windows or devices on the same network. Both devices must use the same server address and pairing code.
 
-## Important limitations
-This is a prototype, not end-to-end encrypted. Do not send passwords, private keys, or sensitive data. Room codes are not authentication. Add authentication, authorization, rate limits, and secure transport before production use.
+## Deploy
 
-## Debug checklist
-1. Confirm both devices can open the server URL.
-2. Confirm the server is running and port 3000 is reachable.
-3. Confirm both devices use the exact same room code.
-4. Check browser developer tools for WebSocket errors.
-5. Check the terminal for server errors.
+The Render web service runs \`node server.js\` and serves both the web app and WebSocket endpoint from the same origin. HTTPS/WSS is used automatically on the hosted site. The \`/health\` endpoint provides a simple service health check.
 
-## GitHub
-Create a new repository named `cross-device-connection`, then upload these files or push this folder with Git.
+## Android APK
 
+The GitHub Actions workflow at \`.github/workflows/android-apk.yml\` builds a Capacitor Android debug APK. It runs on pushes to \`main\` and can also be started manually from the Actions tab.
 
-## Android APK build
+After a successful workflow:
+1. Open the completed **Build Android APK** workflow run.
+2. Download the \`cross-device-connect-debug-apk\` artifact.
+3. Extract \`app-debug.apk\` and install it on an Android device.
 
-This repository includes a Capacitor Android wrapper and a GitHub Actions workflow at `.github/workflows/android-apk.yml`. Run the workflow from the Actions tab (Build Android APK) or push a change to the app source. When the workflow succeeds, download the `cross-device-connect-debug-apk` artifact and install `app-debug.apk` on an Android device. The native app connects to the hosted WebSocket endpoint at `wss://cross-device-connect.onrender.com`.
+The Android wrapper connects to \`wss://cross-device-connect.onrender.com\`.
+
+## Security and limitations
+
+- The hosted connection uses HTTPS/WSS encryption in transit.
+- Messages are **not end-to-end encrypted** and the service is not designed for secrets or sensitive personal data.
+- A pairing code is a temporary room key, not an identity or account login.
+- Messages are live and are not stored as chat history.
+- Keep the app and server updated before using it beyond testing.
